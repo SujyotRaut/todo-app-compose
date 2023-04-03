@@ -24,16 +24,6 @@ import com.example.todoapp.ui.theme.TodoAppTheme
 
 @Composable
 fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
-    val context = LocalContext.current
-    var todoInput by remember { mutableStateOf("") }
-
-    val addTodo = remember { {
-        if(todoInput.isNotEmpty()) {
-            viewModel.addTodo(Todo(content = todoInput))
-            todoInput = ""
-        } else Toast.makeText(context, "Please enter todo input", Toast.LENGTH_SHORT).show()
-    } }
-
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -47,17 +37,17 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
             Row(modifier = Modifier.height(IntrinsicSize.Max)) {
 
                 TextField(
-                    value = todoInput,
-                    onValueChange = { todoInput = it },
+                    value = viewModel.todoInput,
+                    onValueChange = { viewModel.onChangeTodoInput(it) },
                     placeholder =  { Text(text = "Todo") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(onDone = { addTodo() }),
+                    keyboardActions = KeyboardActions(onDone = { viewModel.addTodo() }),
                     modifier = Modifier.weight(1f)
                 )
 
                 Button(
-                    onClick = addTodo,
+                    onClick = { viewModel.addTodo() },
                     modifier = Modifier.fillMaxHeight(),
                     shape = RectangleShape,
                 ) {
