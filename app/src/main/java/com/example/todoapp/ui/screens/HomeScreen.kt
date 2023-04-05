@@ -1,7 +1,5 @@
-package com.example.todoapp.ui
+package com.example.todoapp.ui.screens
 
-import android.widget.Toast
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -13,13 +11,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.todoapp.models.Todo
+import com.example.todoapp.data.Todo
 import com.example.todoapp.ui.theme.TodoAppTheme
 
 @Composable
@@ -38,7 +35,11 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
 
                 TextField(
                     value = viewModel.todoInput,
-                    onValueChange = { viewModel.onChangeTodoInput(it) },
+                    onValueChange = {
+                        val lastChar = it[it.length - 1]
+                        if(lastChar == '\n') viewModel.addTodo()
+                        else viewModel.onChangeTodoInput(it)
+                    },
                     placeholder =  { Text(text = "Todo") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
@@ -55,7 +56,16 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
                 }
             }
 
-            TodoList(todos = viewModel.todos, onDeleteTodo = { viewModel.removeTodo(it) })
+            when (val uiState = viewModel.uiState) {
+                is HomeScreenUiState.Loading -> LoadingScreen(modifier = Modifier.fillMaxSize())
+
+                is HomeScreenUiState.Success -> TodoList(
+                    todos = uiState.todos,
+                    onDeleteTodo = { viewModel.removeTodo(it) }
+                )
+
+                is HomeScreenUiState.Error -> ErrorScreen(modifier = Modifier.fillMaxSize())
+            }
         }
     }
 }
@@ -82,7 +92,7 @@ fun TodoList(todos: List<Todo>, onDeleteTodo: (todo: Todo) -> Unit) {
 fun TodoListItem(todo: Todo, onDeleteTodo: (todo: Todo) -> Unit ) {
     Row (modifier = Modifier) {
         Text(
-            text = todo.content,
+            text = todo.title,
             maxLines = 4,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier
